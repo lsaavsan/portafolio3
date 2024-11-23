@@ -2,6 +2,7 @@ import streamlit as st
 import plotly.graph_objects as go
 import seaborn as sns
 import pandas as pd
+import plotly.express as px
 
 # carga el archivo
 df_unido = pd.read_excel('dataunida.xlsx')
@@ -45,7 +46,7 @@ fig.add_trace(
 
 # Ajustar el diseño del gráfico
 fig.update_layout(
-    title_text=f'Agrupamiento de Alumnos por PPA y Modalidad de Ingreso: {selected_modality}',
+    title_text=f'Grupos de Alumnos por PPA del semestre {selected_ciclo} y Modalidad de Ingreso: {selected_modality}',
     xaxis_title='PPA',
     yaxis_title='Cluster',
     yaxis=dict(
@@ -57,4 +58,85 @@ fig.update_layout(
 )
 
 # Mostrar el gráfico en Streamlit
+st.plotly_chart(fig)
+
+st.markdown("""____""")
+
+dfx=pd.read_excel('dataunida.xlsx')
+
+
+# Agrupación y cálculo de rangos
+result = dfx[(dfx['Ciclo'] == selected_ciclo)&(dfx['Modalidad'] == selected_modality)&(dfx['PPA'] <10.5)].groupby(['Modalidad', 'Cluster']).agg(
+    min_PPA=('PPA', 'min'),
+    max_PPA=('PPA', 'max'),
+    count_PPA=('PPA', 'count')
+).reset_index()
+
+# Crear una columna para la leyenda personalizada
+result['Cluster_Range'] = result.apply(
+    lambda row: f"Cluster {row['Cluster']}: {row['min_PPA']:.2f}-{row['max_PPA']:.2f}", axis=1
+)
+
+# Crear el gráfico
+fig = px.bar(
+    result,
+    x='Modalidad',
+    y='count_PPA',
+    color='Cluster_Range',  # Usamos la columna de rango como color
+    text='count_PPA',
+    title=f'Distribución de Clusters por Modalidad:{selected_modality} en el semestre {selected_ciclo} <br> con Rango de PPA menor a 10.5',
+    labels={'count_PPA': 'Cantidad de PPA', 'Modalidad': 'Modalidad de Ingreso'}
+)
+
+# Ajustar diseño
+fig.update_layout(
+    width=1000,  # Ancho del gráfico
+    height=800,  # Altura del gráfico
+    legend_title_text='Cluster y Rango de PPA',
+    xaxis_title='Modalidad de Ingreso',
+    yaxis_title='Cantidad de PPA',
+    xaxis=dict(
+        tickangle=0  # Rotar etiquetas 90 grados
+    )
+)
+
+# Mostrar el gráfico
+st.plotly_chart(fig)
+st.markdown("""____""")
+# Agrupación y cálculo de rangos
+result = dfx[(dfx['Ciclo'] == selected_ciclo)&(dfx['Modalidad'] == selected_modality)&(dfx['PPA'] >=10.5)].groupby(['Modalidad', 'Cluster']).agg(
+    min_PPA=('PPA', 'min'),
+    max_PPA=('PPA', 'max'),
+    count_PPA=('PPA', 'count')
+).reset_index()
+
+# Crear una columna para la leyenda personalizada
+result['Cluster_Range'] = result.apply(
+    lambda row: f"Cluster {row['Cluster']}: {row['min_PPA']:.2f}-{row['max_PPA']:.2f}", axis=1
+)
+
+# Crear el gráfico
+fig = px.bar(
+    result,
+    x='Modalidad',
+    y='count_PPA',
+    color='Cluster_Range',  # Usamos la columna de rango como color
+    text='count_PPA',
+    title=f'Distribución de Clusters por Modalidad:{selected_modality} en el semestre {selected_ciclo} <br> con Rango de PPA mayor o igual a 10.5',
+    labels={'count_PPA': 'Cantidad de PPA', 'Modalidad': 'Modalidad de Ingreso'}
+)
+
+# Ajustar diseño
+fig.update_layout(
+    width=1000,  # Ancho del gráfico
+    height=800,  # Altura del gráfico
+    legend_title_text='Cluster y Rango de PPA',
+    xaxis_title='Modalidad de Ingreso',
+    yaxis_title='Cantidad de PPA',
+    xaxis=dict(
+        tickangle=0  # Rotar etiquetas 90 grados
+    )
+)
+
+# Mostrar el gráfico
 st.plotly_chart(fig)
